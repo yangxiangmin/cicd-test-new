@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        REPO_URL = 'https://github.com/yangxiangmin/cicd-test.git'
+        REPO_URL = 'https://github.com/yangxiangmin/cicd-test-new.git'
         BUILD_DIR = 'build'
         ARTIFACTS_DIR = 'artifacts'
     }
