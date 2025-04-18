@@ -22,7 +22,8 @@ pipeline {
                 mkdir -p ${BUILD_DIR}
                 cd ${BUILD_DIR}
                 cmake -DCMAKE_CXX_STANDARD=11 ..
-                make -j$(nproc)
+#                make -j$(nproc)
+                make
                 '''
             }
         }
