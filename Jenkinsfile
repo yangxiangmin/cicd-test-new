@@ -5,6 +5,9 @@ pipeline {
         REPO_URL = 'https://github.com/yangxiangmin/cicd-test-new.git'
         BUILD_DIR = 'build'
         ARTIFACTS_DIR = 'artifacts'
+        ARTIFACT_NAME = "math_ops-$(date +%Y%m%d).tar.gz"
+        STAGING_SERVER = "user@staging-server"
+        PROD_SERVER = "user@prod-server"
     }
 
     stages {
@@ -51,25 +54,42 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            when { branch 'main' }
-            steps {
-                sshPublisher(
-                    publishers: [
-                        sshPublisherDesc(
-                            configName: 'prod_server',
-                            transfers: [
-                                sshTransfer(
-                                    sourceFiles: 'math_ops-*.tar.gz',
-                                    remoteDirectory: '/opt/math_ops',
-                                    execCommand: '''
-                                    tar -xzvf /opt/math_ops/math_ops-*.tar.gz -C /opt/math_ops
-                                    '''
-                                )
-                            ]
-                        )
-                    ]
-                )
+    stage('Deploy to Staging') {
+        when { branch 'main' }
+        steps {
+            withCredentials([sshUserPrivateKey(
+                credentialsId: 'staging-key', 
+                keyFileVariable: 'SSH_KEY'
+            )]) {
+                sh """
+                scp -i $SSH_KEY math_ops-*.tar.gz ${STAGING_SERVER}:/opt/cicd_test_project/
+                ssh -i $SSH_KEY ${STAGING_SERVER} "
+                    tar -xzvf /opt/cicd_test_project/math_ops-*.tar.gz -C /opt/cicd_test_project/
+                    chmod +x /opt/cicd_test_project/math_app
+                "
+                """
+            }
+        }
+    }
+
+    stage('Deploy to Production') {
+        when { branch 'main' }
+        steps {
+            input(
+                message: '确认部署到生产环境?', 
+                ok: 'Yes',
+                timeout: time(minutes: 30)
+            withCredentials([sshUserPrivateKey(
+                credentialsId: 'prod-key', 
+                keyFileVariable: 'SSH_KEY'
+            )]) {
+                sh """
+                scp -i $SSH_KEY math_ops-*.tar.gz ${PROD_SERVER}:/opt/cicd_test_project/
+                ssh -i $SSH_KEY ${PROD_SERVER} "
+                    tar -xzvf /opt/cicd_test_project/math_ops-*.tar.gz -C /opt/cicd_test_project/
+                    systemctl restart cicd_test_project.service
+                "
+                """
             }
         }
     }
