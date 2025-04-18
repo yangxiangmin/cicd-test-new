@@ -33,7 +33,7 @@ pipeline {
                 sh '''
                 # 必须重新进入构建目录
                 cd ${BUILD_DIR}
-                ls -l
+                ls -R
                 
                 # 运行测试（确保 math_test 在 build 目录存在）
                 ./math_test --gtest_output="xml:test-results.xml"
