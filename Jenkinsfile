@@ -31,19 +31,23 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
-                # 必须重新进入构建目录
+                # 确保在构建目录
                 cd ${BUILD_DIR}
-                ls -R
                 
-                # 运行测试（确保 math_test 在 build 目录存在）
-                ./tests/math_test --gtest_output="xml:test-results.xml"
+                # 清理旧报告
+                rm -f test-results.xml
                 
-                # 验证报告存在
-                ls -l test-results.xml
+                # 执行测试（绝对路径+指定报告路径）
+                ./tests/math_test --gtest_output="xml:${BUILD_DIR}/test-results.xml"
+                
+                # 验证报告
+                if [ ! -f "test-results.xml" ]; then
+                    echo "❌ 错误：测试报告未生成"
+                    exit 1
+                fi
                 '''
                 
-                // 正确路径：build/test-results.xml
-                junit '${BUILD_DIR}/test-results.xml'
+                junit "${BUILD_DIR}/test-results.xml"
             }
         }
 
