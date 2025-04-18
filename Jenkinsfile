@@ -36,7 +36,7 @@ pipeline {
                 ls -R
                 
                 # 运行测试（确保 math_test 在 build 目录存在）
-                ./math_test --gtest_output="xml:test-results.xml"
+                ./tests/math_test --gtest_output="xml:test-results.xml"
                 
                 # 验证报告存在
                 ls -l test-results.xml
