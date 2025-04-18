@@ -31,9 +31,12 @@ pipeline {
             steps {
                 sh '''
                 cd ${BUILD_DIR}
+                # 生成报告并验证
                 ./tests/math_test --gtest_output="xml:test-results.xml"
+                ls -l test-results.xml || echo "❌ 错误：测试报告未生成"
                 '''
-                junit 'test-results.xml'
+                // 使用绝对路径收集报告
+                junit '${BUILD_DIR}/test-results.xml'
             }
         }
 
