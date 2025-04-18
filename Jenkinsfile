@@ -13,9 +13,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', 
-                     url: env.REPO_URL,
-                     poll: true
+                git branch: 'main', url: env.REPO_URL
             }
         }
 
@@ -46,9 +44,9 @@ pipeline {
                 sh '''
                 mkdir -p ${ARTIFACTS_DIR}
                 cp ${BUILD_DIR}/math_app ${ARTIFACTS_DIR}/
-                tar -czvf ${ARTIFACT_NAME} ${ARTIFACTS_DIR}
+                tar -czvf ${BUILD_DIR}/${ARTIFACT_NAME} -C ${ARTIFACTS_DIR} .
                 '''
-                archiveArtifacts artifacts: '*.tar.gz'
+                archiveArtifacts artifacts: "${BUILD_DIR}/${ARTIFACT_NAME}"
             }
         }
 
@@ -60,8 +58,8 @@ pipeline {
                     keyFileVariable: 'SSH_KEY'
                 )]) {
                     sh """
-                    scp -i $SSH_KEY ${ARTIFACT_NAME} ${STAGING_SERVER}:/opt/cicd_test_project/
-                    ssh -i $SSH_KEY ${STAGING_SERVER} "
+                    scp -i ${SSH_KEY} ${BUILD_DIR}/${ARTIFACT_NAME} ${STAGING_SERVER}:/opt/cicd_test_project/
+                    ssh -i ${SSH_KEY} ${STAGING_SERVER} "
                         tar -xzvf /opt/cicd_test_project/${ARTIFACT_NAME} -C /opt/cicd_test_project/
                         chmod +x /opt/cicd_test_project/math_app
                     "
@@ -75,16 +73,16 @@ pipeline {
             steps {
                 input(
                     message: '确认部署到生产环境?', 
-                    ok: 'Yes',
-                    timeout: time(minutes: 30)
+                    ok: 'Yes'
                 )
+                timeout(time: 30, unit: 'MINUTES')
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'prod-key', 
                     keyFileVariable: 'SSH_KEY'
                 )]) {
                     sh """
-                    scp -i $SSH_KEY ${ARTIFACT_NAME} ${PROD_SERVER}:/opt/cicd_test_project/
-                    ssh -i $SSH_KEY ${PROD_SERVER} "
+                    scp -i ${SSH_KEY} ${BUILD_DIR}/${ARTIFACT_NAME} ${PROD_SERVER}:/opt/cicd_test_project/
+                    ssh -i ${SSH_KEY} ${PROD_SERVER} "
                         tar -xzvf /opt/cicd_test_project/${ARTIFACT_NAME} -C /opt/cicd_test_project/
                         systemctl restart cicd_test_project.service
                     "
