@@ -31,32 +31,15 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
-                # 确保在构建目录
                 cd ${BUILD_DIR}
-                
-                # 清理旧报告
-                rm -f test-results.xml
-                
-                # 执行测试（绝对路径+指定报告路径）
-                ./tests/math_test --gtest_output="xml:${BUILD_DIR}/test-results.xml"
-                
-                pwd
-                
-                ls -l
-
-                ls -l tests
-
-                # 验证报告
-                if [ ! -f "test-results.xml" ]; then
-                    echo "❌ 错误：测试报告未生成"
-                    exit 1
-                fi
+                # 使用绝对路径确保位置准确
+                ./tests/math_test --gtest_output="xml:${WORKSPACE}/${BUILD_DIR}/test-results.xml"
+                ls -l "${WORKSPACE}/${BUILD_DIR}/test-results.xml" || echo "❌ 报告生成失败"
                 '''
-                
-                junit "${BUILD_DIR}/test-results.xml"
+                junit "${WORKSPACE}/${BUILD_DIR}/test-results.xml"
             }
         }
-
+        
         stage('Package') {
             steps {
                 sh '''
