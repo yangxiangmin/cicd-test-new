@@ -5,7 +5,7 @@ pipeline {
         REPO_URL = 'https://github.com/yangxiangmin/cicd-test-new.git'
         BUILD_DIR = 'build'
         ARTIFACTS_DIR = 'artifacts'
-        ARTIFACT_NAME = "math_ops-$(date +%Y%m%d).tar.gz"
+        ARTIFACT_NAME = "math_ops-${new Date().format('yyyyMMdd')}.tar.gz"
         STAGING_SERVER = "user@staging-server"
         PROD_SERVER = "user@prod-server"
     }
@@ -14,8 +14,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', 
-                     url: env.REPO_URL,
-                     poll: true
+                     url: env.REPO_URL
             }
         }
 
@@ -25,7 +24,6 @@ pipeline {
                 mkdir -p ${BUILD_DIR}
                 cd ${BUILD_DIR}
                 cmake -DCMAKE_CXX_STANDARD=11 ..
-#                make -j$(nproc)
                 make
                 '''
             }
@@ -35,7 +33,6 @@ pipeline {
             steps {
                 sh '''
                 cd ${BUILD_DIR}
-                # 使用绝对路径确保位置准确
                 ./tests/math_test --gtest_output="xml:${WORKSPACE}/${BUILD_DIR}/test-results.xml"
                 ls -l "${WORKSPACE}/${BUILD_DIR}/test-results.xml" || echo "❌ 报告生成失败"
                 '''
@@ -48,48 +45,50 @@ pipeline {
                 sh '''
                 mkdir -p ${ARTIFACTS_DIR}
                 cp ${BUILD_DIR}/math_app ${ARTIFACTS_DIR}/
-                tar -czvf math_ops-$(date +%Y%m%d).tar.gz ${ARTIFACTS_DIR}
+                tar -czvf ${ARTIFACT_NAME} ${ARTIFACTS_DIR}
                 '''
                 archiveArtifacts artifacts: '*.tar.gz'
             }
         }
 
-    stage('Deploy to Staging') {
-        when { branch 'main' }
-        steps {
-            withCredentials([sshUserPrivateKey(
-                credentialsId: 'staging-key', 
-                keyFileVariable: 'SSH_KEY'
-            )]) {
-                sh """
-                scp -i $SSH_KEY math_ops-*.tar.gz ${STAGING_SERVER}:/opt/cicd_test_project/
-                ssh -i $SSH_KEY ${STAGING_SERVER} "
-                    tar -xzvf /opt/cicd_test_project/math_ops-*.tar.gz -C /opt/cicd_test_project/
-                    chmod +x /opt/cicd_test_project/math_app
-                "
-                """
+        stage('Deploy to Staging') {
+            when { branch 'main' }
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'staging-key', 
+                    keyFileVariable: 'SSH_KEY'
+                )]) {
+                    sh """
+                    scp -i $SSH_KEY ${ARTIFACT_NAME} ${STAGING_SERVER}:/opt/cicd_test_project/
+                    ssh -i $SSH_KEY ${STAGING_SERVER} "
+                        tar -xzvf /opt/cicd_test_project/${ARTIFACT_NAME} -C /opt/cicd_test_project/
+                        chmod +x /opt/cicd_test_project/math_app
+                    "
+                    """
+                }
             }
         }
-    }
 
-    stage('Deploy to Production') {
-        when { branch 'main' }
-        steps {
-            input(
-                message: '确认部署到生产环境?', 
-                ok: 'Yes',
-                timeout: time(minutes: 30)
-            withCredentials([sshUserPrivateKey(
-                credentialsId: 'prod-key', 
-                keyFileVariable: 'SSH_KEY'
-            )]) {
-                sh """
-                scp -i $SSH_KEY math_ops-*.tar.gz ${PROD_SERVER}:/opt/cicd_test_project/
-                ssh -i $SSH_KEY ${PROD_SERVER} "
-                    tar -xzvf /opt/cicd_test_project/math_ops-*.tar.gz -C /opt/cicd_test_project/
-                    systemctl restart cicd_test_project.service
-                "
-                """
+        stage('Deploy to Production') {
+            when { branch 'main' }
+            steps {
+                input(
+                    message: '确认部署到生产环境?', 
+                    ok: 'Yes',
+                    timeout: time(minutes: 30)
+                )
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'prod-key', 
+                    keyFileVariable: 'SSH_KEY'
+                )]) {
+                    sh """
+                    scp -i $SSH_KEY ${ARTIFACT_NAME} ${PROD_SERVER}:/opt/cicd_test_project/
+                    ssh -i $SSH_KEY ${PROD_SERVER} "
+                        tar -xzvf /opt/cicd_test_project/${ARTIFACT_NAME} -C /opt/cicd_test_project/
+                        systemctl restart cicd_test_project.service
+                    "
+                    """
+                }
             }
         }
     }
