@@ -78,7 +78,7 @@ pipeline {
         failure {
             emailext body: '构建失败，请检查日志：${BUILD_URL}console',
                      subject: '构建失败通知',
-                     to: 'dev@example.com'
+                     to: '13826273737@139.com'
         }
     }
 }
