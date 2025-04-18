@@ -75,6 +75,11 @@ pipeline {
     }
 
     post {
+        success {
+            emailext body: '构建成功，项目：${BUILD_URL}',
+                     subject: '构建成功通知',
+                     to: '13826273737@139.com'
+        }
         failure {
             emailext body: '构建失败，请检查日志：${BUILD_URL}console',
                      subject: '构建失败通知',
