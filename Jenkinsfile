@@ -40,6 +40,12 @@ pipeline {
                 # 执行测试（绝对路径+指定报告路径）
                 ./tests/math_test --gtest_output="xml:${BUILD_DIR}/test-results.xml"
                 
+                pwd
+                
+                ls -l
+
+                ls -l tests
+
                 # 验证报告
                 if [ ! -f "test-results.xml" ]; then
                     echo "❌ 错误：测试报告未生成"
