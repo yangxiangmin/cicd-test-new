@@ -36,10 +36,10 @@ pipeline {
                 ./tests/math_test --gtest_output="xml:${WORKSPACE}/${BUILD_DIR}/test-results.xml"
                 ls -l "${WORKSPACE}/${BUILD_DIR}/test-results.xml" || echo "❌ 报告生成失败"
                 '''
-                junit "${WORKSPACE}/${BUILD_DIR}/test-results.xml"
+                junit "${BUILD_DIR}/test-results.xml"
             }
         }
-        
+
         stage('Package') {
             steps {
                 sh '''
