@@ -45,14 +45,15 @@ pipeline {
                 cp ${BUILD_DIR}/math_app ${ARTIFACTS_DIR}/
                 tar -czvf math_ops-$(date +%Y%m%d).tar.gz ${ARTIFACTS_DIR}
                 '''
+                sh 'ls -l *.tar.gz'  // 检查文件是否生成
                 archiveArtifacts artifacts: '*.tar.gz'
             }
         }
 
         stage('Deploy') {
-        	sh 'echo "当前分支是：$(git rev-parse --abbrev-ref HEAD)"'
-            when { branch 'main' }
+#            when { branch 'main' }
             steps {
+            	sh 'echo "当前分支是：$(git rev-parse --abbrev-ref HEAD)"'
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
