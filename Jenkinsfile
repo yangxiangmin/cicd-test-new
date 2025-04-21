@@ -84,6 +84,37 @@ pipeline {
         }
 
         stage('Deploy-Pro') {
+            // when { branch 'main' }
+            steps {
+                sh 'echo "当前分支是：$(git rev-parse --abbrev-ref HEAD)"'
+                sshPublisher(
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: 'proenv', 
+                            transfers: [
+                                sshTransfer(
+                                    sourceFiles: 'math_ops-*.tar.gz',
+                                    removePrefix: '',
+                                    remoteDirectory: '/opt/math_ops',
+                                    execCommand: '''
+                                        cd /opt/math_ops && \
+                                        tar -xzvf math_ops-*.tar.gz && \
+                                        rm -f math_ops-*.tar.gz
+                                    '''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )
+                    ]
+                )
+                echo "✅ 已部署到测试环境！"
+            }
+        }
+
+/*
+        stage('Deploy-Pro') {
             // 1. 添加 input 步骤，让用户确认是否部署
             steps {
                 script {
@@ -134,6 +165,7 @@ pipeline {
                 }
             }
         }
+*/
     }
 
     post {
