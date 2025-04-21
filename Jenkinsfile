@@ -56,7 +56,7 @@ pipeline {
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
-                            configName: 'outer-test', 
+                            configName: 'proenv', 
                             transfers: [
                                 sshTransfer(
                                     sourceFiles: 'math_ops-*.tar.gz',
