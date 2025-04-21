@@ -51,7 +51,7 @@ pipeline {
         }
 
         stage('Deploy') {
-#            when { branch 'main' }
+            // when { branch 'main' }
             steps {
             	sh 'echo "当前分支是：$(git rev-parse --abbrev-ref HEAD)"'
                 sshPublisher(
