@@ -51,28 +51,33 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            when { branch 'main' }
-            steps {
-                sshPublisher(
-                    publishers: [
-                        sshPublisherDesc(
-                            configName: 'prod_server',
-                            transfers: [
-                                sshTransfer(
-                                    sourceFiles: 'math_ops-*.tar.gz',
-                                    remoteDirectory: '/opt/math_ops',
-                                    execCommand: '''
-                                    tar -xzvf /opt/math_ops/math_ops-*.tar.gz -C /opt/math_ops
-                                    '''
-                                )
-                            ]
-                        )
-                    ]
-                )
-            }
-        }
-    }
+		stage('Deploy') {
+		    when { branch 'main' }
+		    steps {
+		        sshPublisher(
+		            publishers: [
+		                sshPublisherDesc(
+		                    configName: 'outer-test',  // 必须与Jenkins中配置的SSH Server名称一致
+		                    transfers: [
+		                        sshTransfer(
+		                            sourceFiles: 'math_ops-*.tar.gz',  // 要传输的文件
+		                            removePrefix: '',                  // 可选：移除路径前缀
+		                            remoteDirectory: '/opt/math_ops',  // 远程目标目录
+		                            execCommand: '''
+		                                cd /opt/math_ops && \
+		                                tar -xzvf math_ops-*.tar.gz && \
+		                                rm -f math_ops-*.tar.gz        # 解压后删除压缩包（可选）
+		                            '''
+		                        )
+		                    ],
+		                    usePromotionTimestamp: false,
+		                    useWorkspaceInPromotion: false,
+		                    verbose: true
+		                )
+		            ]
+		        )
+		    }
+		}
 
     post {
         failure {
