@@ -49,10 +49,39 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy-Test') {
             // when { branch 'main' }
             steps {
             	sh 'echo "当前分支是：$(git rev-parse --abbrev-ref HEAD)"'
+                sshPublisher(
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: 'testenv', 
+                            transfers: [
+                                sshTransfer(
+                                    sourceFiles: 'math_ops-*.tar.gz',
+                                    removePrefix: '',
+                                    remoteDirectory: '/opt/math_ops',
+                                    execCommand: '''
+                                        cd /opt/math_ops && \
+                                        tar -xzvf math_ops-*.tar.gz && \
+                                        rm -f math_ops-*.tar.gz
+                                    '''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )
+                    ]
+                )
+            }
+        }
+
+        stage('Deploy-Pro') {
+            // when { branch 'main' }
+            steps {
+                sh 'echo "当前分支是：$(git rev-parse --abbrev-ref HEAD)"'
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
