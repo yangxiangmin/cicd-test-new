@@ -13,6 +13,7 @@ pipeline {
                 git branch: 'main', 
                      url: env.REPO_URL,
                      poll: true
+                echo "✅ 已完成代码检出！"
             }
         }
 
@@ -24,6 +25,7 @@ pipeline {
                 cmake -DCMAKE_CXX_STANDARD=11 ..
                 make
                 '''
+                echo "✅ 已完成编译！"
             }
         }
 
@@ -35,6 +37,7 @@ pipeline {
                 ls -l "${WORKSPACE}/${BUILD_DIR}/test-results.xml" || echo "❌ 报告生成失败"
                 '''
                 junit "${BUILD_DIR}/test-results.xml"
+                echo "✅ 已完成测试！"
             }
         }
 
@@ -46,6 +49,7 @@ pipeline {
                 tar -czvf math_ops-$(date +%Y%m%d).tar.gz ${ARTIFACTS_DIR}
                 '''
                 archiveArtifacts artifacts: '*.tar.gz'
+                echo "✅ 已完成打包！"
             }
         }
 
