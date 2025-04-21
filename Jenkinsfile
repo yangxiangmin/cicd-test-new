@@ -57,7 +57,7 @@ pipeline {
 		        sshPublisher(
 		            publishers: [
 		                sshPublisherDesc(
-		                    configName: 'outer-test',  // 必须与Jenkins中配置的SSH Server名称一致
+		                    configName: 'outer-test',  // 确保与Jenkins配置的SSH Server名称一致
 		                    transfers: [
 		                        sshTransfer(
 		                            sourceFiles: 'math_ops-*.tar.gz',  // 要传输的文件
@@ -66,7 +66,7 @@ pipeline {
 		                            execCommand: '''
 		                                cd /opt/math_ops && \
 		                                tar -xzvf math_ops-*.tar.gz && \
-		                                rm -f math_ops-*.tar.gz        # 解压后删除压缩包（可选）
+		                                rm -f math_ops-*.tar.gz
 		                            '''
 		                        )
 		                    ],
