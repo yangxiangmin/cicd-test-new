@@ -22,7 +22,6 @@ pipeline {
                 mkdir -p ${BUILD_DIR}
                 cd ${BUILD_DIR}
                 cmake -DCMAKE_CXX_STANDARD=11 ..
-#                make -j$(nproc)
                 make
                 '''
             }
@@ -32,7 +31,6 @@ pipeline {
             steps {
                 sh '''
                 cd ${BUILD_DIR}
-                # 使用绝对路径确保位置准确
                 ./tests/math_test --gtest_output="xml:${WORKSPACE}/${BUILD_DIR}/test-results.xml"
                 ls -l "${WORKSPACE}/${BUILD_DIR}/test-results.xml" || echo "❌ 报告生成失败"
                 '''
@@ -51,33 +49,34 @@ pipeline {
             }
         }
 
-		stage('Deploy') {
-		    when { branch 'main' }
-		    steps {
-		        sshPublisher(
-		            publishers: [
-		                sshPublisherDesc(
-		                    configName: 'outer-test',  // 确保与Jenkins配置的SSH Server名称一致
-		                    transfers: [
-		                        sshTransfer(
-		                            sourceFiles: 'math_ops-*.tar.gz',  // 要传输的文件
-		                            removePrefix: '',                  // 可选：移除路径前缀
-		                            remoteDirectory: '/opt/math_ops',  // 远程目标目录
-		                            execCommand: '''
-		                                cd /opt/math_ops && \
-		                                tar -xzvf math_ops-*.tar.gz && \
-		                                rm -f math_ops-*.tar.gz
-		                            '''
-		                        )
-		                    ],
-		                    usePromotionTimestamp: false,
-		                    useWorkspaceInPromotion: false,
-		                    verbose: true
-		                )
-		            ]
-		        )
-		    }
-		}
+        stage('Deploy') {
+            when { branch 'main' }
+            steps {
+                sshPublisher(
+                    publishers: [
+                        sshPublisherDesc(
+                            configName: 'outer-test', 
+                            transfers: [
+                                sshTransfer(
+                                    sourceFiles: 'math_ops-*.tar.gz',
+                                    removePrefix: '',
+                                    remoteDirectory: '/opt/math_ops',
+                                    execCommand: '''
+                                        cd /opt/math_ops && \
+                                        tar -xzvf math_ops-*.tar.gz && \
+                                        rm -f math_ops-*.tar.gz
+                                    '''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )
+                    ]
+                )
+            }
+        }
+    }
 
     post {
         failure {
